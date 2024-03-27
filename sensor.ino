@@ -1,21 +1,24 @@
 #include <ESP8266Firebase.h>
 #include <ESP8266WiFi.h>
 
-#define _SSID "wifi"          // Your WiFi SSID
-#define _PASSWORD "pw"      // Your WiFi Password
-#define REFERENCE_URL "url"  // Your Firebase project reference url
+#define _SSID "labrada"          // Your WiFi SSID
+#define _PASSWORD "comcast2017"      // Your WiFi Password
+#define REFERENCE_URL "https://test-5e724-default-rtdb.firebaseio.com/"  // Your Firebase project reference url
 
 Firebase firebase(REFERENCE_URL);
 
-const int photoresistorPin = A0;
-const int redLED = 12;
-const int greenLED = 13;
+const int trigPin = D2;  // Pin connected to HC-SR04 trigger
+const int echoPin = D3;  // Pin connected to HC-SR04 echo
+const int redLED = D6;   // Red LED pin
+const int greenLED = D7; // Green LED pin
 
 bool emptySpot = false;
 bool prevState = false;
 
 void setup() {
   Serial.begin(9600);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
   pinMode(redLED, OUTPUT);
   pinMode(greenLED, OUTPUT);
 
@@ -42,33 +45,34 @@ void setup() {
 }
 
 void loop() {
-  // Read analog value from the photoresistor
-  int sensorValue = analogRead(photoresistorPin);
+  // Trigger ultrasonic sensor
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
   
-  // Convert analog value to voltage (assuming 3.3V reference voltage)
-  float voltage = sensorValue * (3.3 / 1023.0);
+  // Measure the duration of the echo pulse
+  unsigned long duration = pulseIn(echoPin, HIGH);
   
-  // Convert voltage to resistance using voltage divider formula
-  // (you need to replace 10K with the actual resistance of the resistor in your voltage divider)
-  float resistance = (1000.0 / (3.3 - voltage)) * voltage;
-  
-  // Print sensor value, voltage, and resistance to serial monitor
-  Serial.print("Sensor Value: ");
-  Serial.println(sensorValue);
-  Serial.print("Voltage: ");
-  Serial.print(voltage);
-  Serial.println("V");
-  Serial.print("Resistance: ");
-  Serial.print(resistance);
-  Serial.println(" ohms");
+  // Calculate distance in cm
+  float distance = duration * 0.034 / 2;
 
-  emptySpot = voltage <= 3.3 / 2;
+  // Print distance to serial monitor
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
 
+  // Check if distance is less than or equal to 10cm
+  emptySpot = (distance <= 10);
+
+  // Update LED status
   digitalWrite(redLED, emptySpot);
   digitalWrite(greenLED, !emptySpot);
 
+  // Update Firebase if status changes
   if (emptySpot != prevState) {
-    firebase.setInt("Parking_lot_1_test/parking_spot_1_test", emptySpot);
+    firebase.setInt("home/spot1", emptySpot);
     prevState = emptySpot;
   }
 
