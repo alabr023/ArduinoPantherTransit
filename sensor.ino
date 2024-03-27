@@ -1,8 +1,8 @@
-#include <ESP8266Firebase.h>
+tgit#include <ESP8266Firebase.h>
 #include <ESP8266WiFi.h>
 
-#define _SSID "labrada"          // Your WiFi SSID
-#define _PASSWORD "comcast2017"      // Your WiFi Password
+#define _SSID ""          // Your WiFi SSID
+#define _PASSWORD ""      // Your WiFi Password
 #define REFERENCE_URL "https://test-5e724-default-rtdb.firebaseio.com/"  // Your Firebase project reference url
 
 Firebase firebase(REFERENCE_URL);
